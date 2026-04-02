@@ -67,10 +67,16 @@
       border-radius: 8px;
     }
 
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 32px;
+      gap: 28px;
       list-style: none;
     }
 
@@ -79,6 +85,7 @@
       text-decoration: none;
       font-size: 14px;
       transition: color 0.2s;
+      white-space: nowrap;
     }
 
     .nav-links a:hover { color: var(--white); }
@@ -94,6 +101,7 @@
       font-weight: 600;
       font-size: 14px;
       text-decoration: none;
+      white-space: nowrap;
       transition: opacity 0.2s, transform 0.15s;
     }
 
@@ -519,15 +527,17 @@
     <img src="icon128.png" alt="Copy as Markdown logo" />
     Copy as Markdown
   </a>
-  <ul class="nav-links">
-    <li><a href="#how-it-works">How it works</a></li>
-    <li><a href="#features">Features</a></li>
-    <li><a href="#privacy">Privacy</a></li>
-    <li><a href="privacy.html">Privacy Policy</a></li>
-  </ul>
-  <a class="btn-chrome" href="https://chrome.google.com/webstore" target="_blank">
-    Add to Chrome — Free
-  </a>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#privacy">Privacy</a></li>
+      <li><a href="https://github.com/max5well/md-extension" target="_blank">GitHub</a></li>
+    </ul>
+    <a class="btn-chrome" href="https://chrome.google.com/webstore" target="_blank">
+      Add to Chrome — Free
+    </a>
+  </div>
 </nav>
 
 <!-- HERO -->
