@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Copy as Markdown</title>
+  <link rel="icon" type="image/png" href="icon128.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --magenta: #EC008C; --turquoise: #00DCC8;
+      --bg: #160828; --white: #FFFFFF; --muted: #9b8db0;
+      --gradient: linear-gradient(135deg, #EC008C 0%, #00DCC8 100%);
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica Neue, sans-serif;
+    }
+    body { background: var(--bg); color: var(--white); font-family: var(--font); line-height: 1.7; padding: 80px 24px; }
+    .wrap { max-width: 680px; margin: 0 auto; }
+    a.back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 14px; margin-bottom: 48px; }
+    a.back:hover { color: var(--white); }
+    h1 { font-size: 36px; font-weight: 700; margin-bottom: 8px; }
+    .updated { color: var(--muted); font-size: 14px; margin-bottom: 48px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 40px 0 12px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    p { color: var(--muted); margin-bottom: 16px; }
+    strong { color: var(--white); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← Back to markdowncopy.com</a>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: April 2, 2026</p>
+
+    <h2>The short version</h2>
+    <p><strong>Copy as Markdown does not collect, store, or transmit any data. Ever.</strong> All processing happens locally in your browser.</p>
+
+    <h2>What we collect</h2>
+    <p>Nothing. Copy as Markdown has no backend, no database, no analytics, and no tracking code.</p>
+
+    <h2>How the extension works</h2>
+    <p>When you click the extension icon, it reads the current page's HTML content, converts it to Markdown using a local library, and writes the result to your clipboard. This entire process happens inside your browser tab. No data is sent to any external server.</p>
+
+    <h2>Permissions explained</h2>
+    <p><strong>activeTab</strong> — Used to access the current page when you explicitly click the icon. The extension cannot access any page you haven't activated it on.</p>
+    <p><strong>scripting</strong> — Used to inject the conversion script into the active tab to extract and convert content.</p>
+    <p><strong>clipboardWrite</strong> — Used to write the converted Markdown to your clipboard.</p>
+
+    <h2>Third-party services</h2>
+    <p>None. The extension uses a bundled copy of the Turndown library (MIT licensed) and makes no external network requests.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If anything ever changes, we'll update this page and the date above.</p>
+
+    <h2>Contact</h2>
+    <p>Questions? Open an issue at <strong>github.com/max5well/md-extension</strong></p>
+  </div>
+</body>
+</html>

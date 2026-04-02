@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copy as Markdown — Turn any webpage into clean Markdown in one click</title>
+  <meta name="description" content="Copy any webpage as clean Markdown instantly. Perfect for ChatGPT, Claude, Notion, and Obsidian. Free Chrome extension." />
+  <meta property="og:title" content="Copy as Markdown" />
+  <meta property="og:description" content="Turn any webpage into clean Markdown in one click. Built for AI users, researchers, and note-takers." />
+  <meta property="og:image" content="https://markdowncopy.com/og-image.png" />
+  <meta property="og:url" content="https://markdowncopy.com" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/png" href="icon128.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --magenta:    #EC008C;
+      --turquoise:  #00DCC8;
+      --bg:         #160828;
+      --bg2:        #1e0f35;
+      --white:      #FFFFFF;
+      --muted:      #9b8db0;
+      --gradient:   linear-gradient(135deg, #EC008C 0%, #00DCC8 100%);
+      --radius:     14px;
+      --font:       -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica Neue, sans-serif;
+      --mono:       "SF Mono", "Fira Code", "Courier New", monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--font);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(22, 8, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      text-decoration: none;
+      color: var(--white);
+    }
+
+    .nav-logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--white); }
+
+    .btn-chrome {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: var(--gradient);
+      color: var(--white);
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-chrome:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(236,0,140,0.18) 0%, transparent 70%);
+      top: 10%; left: 10%;
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(0,220,200,0.15) 0%, transparent 70%);
+      bottom: 10%; right: 10%;
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(236,0,140,0.4);
+      background: rgba(236,0,140,0.08);
+      font-size: 13px;
+      color: var(--turquoise);
+      margin-bottom: 32px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge span { color: var(--magenta); }
+
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 76px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      max-width: 800px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 .gradient-text {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: clamp(17px, 2vw, 20px);
+      color: var(--muted);
+      max-width: 540px;
+      margin-bottom: 48px;
+    }
+
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 64px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      border-radius: 999px;
+      background: var(--gradient);
+      color: var(--white);
+      font-weight: 700;
+      font-size: 16px;
+      text-decoration: none;
+      box-shadow: 0 0 40px rgba(236,0,140,0.3);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.92;
+      transform: translateY(-2px);
+      box-shadow: 0 0 60px rgba(236,0,140,0.45);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--white);
+      font-size: 15px;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .hero-demo {
+      position: relative;
+      width: 100%;
+      max-width: 680px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+      color: #c4b5d8;
+    }
+
+    .hero-demo .md-h1 { color: var(--turquoise); font-weight: bold; }
+    .hero-demo .md-blockquote { color: var(--muted); }
+    .hero-demo .md-h2 { color: #e8d5ff; font-weight: bold; margin-top: 8px; }
+    .hero-demo .md-bold { color: var(--white); font-weight: bold; }
+    .hero-demo .md-li { color: #c4b5d8; }
+
+    .demo-label {
+      position: absolute;
+      top: -12px; left: 20px;
+      background: var(--gradient);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-family: var(--font);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* ── LOGOS (compatible with) ── */
+    .compat {
+      padding: 40px 24px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .compat p {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .compat-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+
+    .compat-logos span {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.01em;
+      transition: color 0.2s;
+    }
+
+    .compat-logos span:hover { color: rgba(255,255,255,0.7); }
+
+    /* ── HOW IT WORKS ── */
+    section { padding: 100px 24px; }
+
+    .section-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      text-align: center;
+      font-size: 18px;
+      max-width: 500px;
+      margin: 0 auto 64px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .step {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .step:hover {
+      border-color: rgba(236,0,140,0.3);
+      background: rgba(236,0,140,0.04);
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: var(--gradient);
+      font-weight: 800;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .step h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .step p { color: var(--muted); font-size: 15px; }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover { border-color: rgba(0,220,200,0.3); }
+
+    .feature-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* ── WHY MARKDOWN ── */
+    .why-section {
+      background: var(--bg2);
+    }
+
+    .why-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .why-inner p {
+      font-size: 20px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+
+    .why-inner p strong { color: var(--white); }
+
+    /* ── PRIVACY ── */
+    .privacy-pills {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 48px;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,220,200,0.25);
+      background: rgba(0,220,200,0.05);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .pill-icon {
+      width: 20px; height: 20px;
+      background: var(--gradient);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+
+    /* ── CTA FOOTER ── */
+    .cta-section {
+      text-align: center;
+      padding: 120px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(236,0,140,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .cta-section h2 { margin-bottom: 20px; }
+    .cta-section p { color: var(--muted); font-size: 18px; margin-bottom: 48px; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 40px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    footer .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    footer .footer-logo img { width: 28px; border-radius: 6px; }
+
+    footer nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      margin-left: 24px;
+      transition: color 0.2s;
+    }
+
+    footer nav a:hover { color: var(--white); }
+
+    footer p.copy {
+      color: var(--muted);
+      font-size: 13px;
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      footer { padding: 32px 20px; }
+      footer nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="/">
+    <img src="icon128.png" alt="Copy as Markdown logo" />
+    Copy as Markdown
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#privacy">Privacy</a></li>
+    <li><a href="privacy.html">Privacy Policy</a></li>
+  </ul>
+  <a class="btn-chrome" href="https://chrome.google.com/webstore" target="_blank">
+    Add to Chrome — Free
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span>New</span> Built for the AI era
+  </div>
+  <h1>Copy any webpage as<br /><span class="gradient-text">clean Markdown.</span></h1>
+  <p>One click. No clutter. Ready to paste into ChatGPT, Claude, Notion, or Obsidian — instantly.</p>
+  <div class="hero-cta">
+    <a class="btn-primary" href="https://chrome.google.com/webstore" target="_blank">
+      ⚡ Add to Chrome — It's Free
+    </a>
+    <a class="btn-secondary" href="#how-it-works">See how it works →</a>
+  </div>
+  <div class="hero-demo">
+    <div class="demo-label">Clipboard output</div>
+    <div class="md-h1"># The Future of AI Assistants</div>
+    <div class="md-blockquote">&gt; Source: https://example.com/article</div>
+    <br/>
+    <div class="md-h2">## What are LLMs?</div>
+    <br/>
+    <div>Large language models are <span class="md-bold">**neural networks**</span> trained on vast</div>
+    <div>amounts of text data. They can generate, summarize, and</div>
+    <div>reason about language with remarkable accuracy.</div>
+    <br/>
+    <div class="md-li">- Trained on trillions of tokens</div>
+    <div class="md-li">- Used in ChatGPT, Claude, and Gemini</div>
+    <div class="md-li">- Understand Markdown natively</div>
+  </div>
+</section>
+
+<!-- COMPATIBLE WITH -->
+<div class="compat">
+  <p>Paste directly into</p>
+  <div class="compat-logos">
+    <span>ChatGPT</span>
+    <span>Claude</span>
+    <span>Gemini</span>
+    <span>Notion</span>
+    <span>Obsidian</span>
+    <span>Roam</span>
+    <span>Bear</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <span class="section-label">How it works</span>
+  <h2>Three steps. Zero friction.</h2>
+  <p class="section-sub">No setup, no account, no configuration needed.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Go to any page</h3>
+      <p>Articles, docs, Wikipedia, GitHub, Reddit — any webpage in Chrome.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Click the icon</h3>
+      <p>Hit the Copy as Markdown icon in your toolbar. That's the whole interaction.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Paste anywhere</h3>
+      <p>Your clipboard is loaded with clean, structured Markdown. Paste into your AI or notes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="background: var(--bg2);">
+  <span class="section-label">Features</span>
+  <h2>Built for people who think in Markdown.</h2>
+  <p class="section-sub">Everything you need. Nothing you don't.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>One click</h3>
+      <p>No popups, no options to configure, no steps to follow. Click the icon, done.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>AI-ready output</h3>
+      <p>LLMs understand Markdown natively. Better structure means better answers from your AI.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧹</div>
+      <h3>Smart extraction</h3>
+      <p>Automatically finds the main content and strips nav, ads, sidebars, and footers.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📎</div>
+      <h3>Source included</h3>
+      <p>Every copy includes the page title as a heading and the source URL — no lost references.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>Fully local</h3>
+      <p>No servers, no accounts, no data collection. Everything happens in your browser.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌍</div>
+      <h3>Works everywhere</h3>
+      <p>Articles, documentation, blogs, GitHub READMEs, Wikipedia — any page, any site.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY MARKDOWN -->
+<section class="why-section">
+  <span class="section-label">Why Markdown?</span>
+  <h2>Your AI deserves better input.</h2>
+  <div class="why-inner">
+    <p>When you paste a raw webpage into ChatGPT or Claude, you're sending <strong>noise</strong> — nav menus, cookie banners, ads, and broken formatting that the AI has to wade through.</p>
+    <p>Markdown keeps <strong>everything that matters</strong>: headings, bullet points, code blocks, tables, and links — in a format LLMs understand natively.</p>
+    <p><strong>Better input = better answers.</strong> It's that simple.</p>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section id="privacy">
+  <span class="section-label">Privacy</span>
+  <h2>Your data goes nowhere.</h2>
+  <p class="section-sub">We built this to solve a problem — not to collect your data.</p>
+  <div class="privacy-pills">
+    <div class="pill"><div class="pill-icon">✓</div> No servers</div>
+    <div class="pill"><div class="pill-icon">✓</div> No accounts</div>
+    <div class="pill"><div class="pill-icon">✓</div> No tracking</div>
+    <div class="pill"><div class="pill-icon">✓</div> No analytics</div>
+    <div class="pill"><div class="pill-icon">✓</div> Local only</div>
+    <div class="pill"><div class="pill-icon">✓</div> Open source</div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta-section">
+  <h2>Ready to paste better?</h2>
+  <p>Free forever. No sign-up required.</p>
+  <a class="btn-primary" href="https://chrome.google.com/webstore" target="_blank">
+    ⚡ Add to Chrome — It's Free
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a class="footer-logo" href="/">
+    <img src="icon128.png" alt="logo" />
+    Copy as Markdown
+  </a>
+  <nav>
+    <a href="#how-it-works">How it works</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="https://github.com/max5well/md-extension" target="_blank">GitHub</a>
+  </nav>
+  <p class="copy">© 2026 markdowncopy.com — Made for the AI era</p>
+</footer>
+
+</body>
+</html>
