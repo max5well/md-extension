@@ -37,6 +37,32 @@
       overflow-x: hidden;
     }
 
+    /* ── STICKY CTA ── */
+    .sticky-cta {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #EC008C 0%, #00DCC8 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(236,0,140,0.35);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    .sticky-cta:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 32px rgba(236,0,140,0.5);
+    }
+
 
     /* ── HERO ── */
     .hero {
@@ -244,9 +270,19 @@
 
     .compat-item span {
       font-size: 11px;
-      font-weight: 500;
-      color: var(--white);
+      font-weight: 600;
+      color: #ffffff;
       letter-spacing: 0.03em;
+    }
+
+    .compat-item .app-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     /* ── HOW IT WORKS ── */
@@ -476,6 +512,9 @@
 <body>
 
 
+<!-- STICKY CTA -->
+<a class="sticky-cta" href="https://chrome.google.com/webstore" target="_blank">Get now</a>
+
 <!-- HERO -->
 <section class="hero">
   <div class="hero-badge">
@@ -510,34 +549,63 @@
 <div class="compat">
   <p>Paste directly into</p>
   <div class="compat-logos">
+
+    <!-- ChatGPT -->
     <div class="compat-item">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ChatGPT_logo.svg/240px-ChatGPT_logo.svg.png" alt="ChatGPT" />
+      <div class="app-icon" style="background:#10a37f">
+        <svg width="22" height="22" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M37.532 16.87a9.963 9.963 0 00-.856-8.184 10.078 10.078 0 00-10.855-4.835 9.964 9.964 0 00-7.504-3.346 10.079 10.079 0 00-9.616 6.98 9.967 9.967 0 00-6.664 4.834 10.08 10.08 0 001.24 11.817 9.965 9.965 0 00.856 8.185 10.079 10.079 0 0010.855 4.835 9.965 9.965 0 007.504 3.346 10.078 10.078 0 009.617-6.981 9.967 9.967 0 006.663-4.834 10.079 10.079 0 00-1.24-11.817zm-14.74 20.601a7.477 7.477 0 01-4.798-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 00.655-1.134V19.054l3.366 1.944a.12.12 0 01.066.092v9.299a7.505 7.505 0 01-7.49 7.082zm-16.146-6.879a7.477 7.477 0 01-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 001.308 0l9.724-5.614v3.888a.12.12 0 01-.048.103l-8.051 4.649a7.504 7.504 0 01-10.24-2.744zm-2.102-17.45A7.477 7.477 0 018.43 8.198c.06.037.162.099.237.141l7.964 4.6a1.297 1.297 0 001.308 0l9.724-5.614v3.888a.12.12 0 01-.048.103l-8.051 4.649a7.504 7.504 0 01-10.24-2.744zm27.178 6.455l-9.724-5.614 3.367-1.944a.12.12 0 01.114-.012l8.051 4.648a7.498 7.498 0 01-1.158 13.528v-9.476a1.293 1.293 0 00-.65-1.13zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 00-1.308 0l-9.723 5.614v-3.888a.12.12 0 01.048-.103l8.05-4.645a7.497 7.497 0 0111.135 7.763zm-21.063 6.929l-3.367-1.944a.12.12 0 01-.065-.092v-9.299a7.497 7.497 0 0112.293-5.756 6.94 6.94 0 00-.236.134l-7.965 4.6a1.294 1.294 0 00-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.499v4.996l-4.331 2.5-4.331-2.5V18.54z" fill="white"/></svg>
+      </div>
       <span>ChatGPT</span>
     </div>
+
+    <!-- Claude -->
     <div class="compat-item">
-      <img src="https://claude.ai/favicon.ico" alt="Claude" style="border-radius:50%" />
+      <div class="app-icon" style="background:#d4773a">
+        <svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24.0001 4C12.9543 4 4 12.9543 4 24.0001 4 35.0458 12.9543 44 24.0001 44 35.0459 44 44 35.0458 44 24.0001 44 12.9543 35.0459 4 24.0001 4zm8.707 13.166l-4.72 14.525h-2.394l-3.574-10.71-3.575 10.71h-2.393l-4.72-14.525h2.52l3.449 10.938 3.6-10.938h2.238l3.6 10.938 3.449-10.938h2.52z" fill="white"/></svg>
+      </div>
       <span>Claude</span>
     </div>
+
+    <!-- Gemini -->
     <div class="compat-item">
-      <img src="https://www.gstatic.com/lamda/images/gemini_favicon_f069958c85030456e93de685481c559f160ea06.svg" alt="Gemini" />
+      <div class="app-icon" style="background:linear-gradient(135deg,#1a73e8,#8ab4f8)">
+        <svg width="22" height="22" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M96 16C96 60.18 60.18 96 16 96c44.18 0 80 35.82 80 80 0-44.18 35.82-80 80-80-44.18 0-80-35.82-80-80z" fill="white"/></svg>
+      </div>
       <span>Gemini</span>
     </div>
+
+    <!-- Notion -->
     <div class="compat-item">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png" alt="Notion" />
+      <div class="app-icon" style="background:#ffffff">
+        <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.017 4.313l55.333-4.087c6.797-.583 8.543-.19 12.817 2.917l17.663 12.443c2.913 2.14 3.883 2.723 3.883 5.053v68.243c0 4.277-1.553 6.803-6.993 7.193L24.29 99.967c-4.08.193-6.023-.39-8.16-3.113L3.truth 80.523C1.164 77.807 0 75.373 0 72.453V11.48c0-3.497 1.553-6.413 6.017-7.167z" fill="#fff"/><path fill-rule="evenodd" clip-rule="evenodd" d="M61.35.227l-55.333 4.086C1.553 5.067 0 7.983 0 11.48v60.973c0 2.92 1.164 5.354 3.13 8.07l13.037 16.331c2.137 2.723 4.08 3.307 8.16 3.113l64.430-3.89c5.44-.39 6.993-2.916 6.993-7.193V19.64c0-2.21-.84-2.85-3.493-4.733L74.167 3.144C69.893.037 68.147-.357 61.35.227zM25.308 19.532c-5.28.36-6.487.44-9.483-1.99L8.917 11.39c-.78-.78-.39-1.753.975-1.948l53.577-3.89c4.47-.39 6.803 1.166 8.557 2.527l9.143 6.61c.39.196.975 1.362-.975 1.362l-55.333 3.306-.553.175zM19.443 88.455V30.648c0-2.333.778-3.5 3.11-3.694l59.573-3.5c2.14-.194 3.113 1.167 3.113 3.5v57.42c0 2.333-.39 4.277-3.887 4.47l-57.04 3.307c-3.497.194-4.87-.972-4.87-3.696zm56.645-53.342c.39 1.75 0 3.5-1.75 3.7l-2.916.56v42.84c-2.527 1.364-4.86 2.14-6.807 2.14-3.11 0-3.887-.972-6.22-3.887l-19.03-29.94v28.967l6.02 1.364s0 3.5-4.859 3.5l-13.412.779c-.39-.779 0-2.722 1.36-3.11l3.5-.972V40.507L24.493 40.12c-.39-1.75.583-4.277 3.307-4.472l14.384-.972 19.807 30.333V36.048l-5.06-.583c-.39-2.14 1.164-3.696 3.112-3.89l13.045-.508z" fill="#0f0f0f"/></svg>
+      </div>
       <span>Notion</span>
     </div>
+
+    <!-- Obsidian -->
     <div class="compat-item">
-      <img src="https://obsidian.md/favicon.svg" alt="Obsidian" />
+      <div class="app-icon" style="background:#7c3aed">
+        <svg width="22" height="22" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M383.41 59.06C341.65 30.28 301.1 14.64 271.73 10.56c-20.38-2.84-34.95.83-41.27 10.74-5.07 7.89-4.17 19.25 2.53 32.07-20.5 3.24-40.13 11.07-57.25 22.89C112.9 113.26 86 179.74 96.84 244.84l.09.52.2.5c2.14 5.4 5.04 10.44 8.62 15 .54.68 1.1 1.34 1.67 1.98l-1.3 3.42c-8.36 22.06-6.77 46.1 4.36 66.94l.67 1.23.95 1.05c27.3 30.03 65.96 45.18 106.48 41.25l.56-.05.55-.12c5.4-1.2 10.73-2.87 15.9-5.01l2.76 1.65c19.86 11.88 42.68 16.52 65.29 13.17l1.13-.17 1.06-.39c12.05-4.44 23.28-11.04 33.25-19.53l3.23.19c33.9 1.97 66.54-11.97 88.52-37.59l.79-.93.53-1.1c11.29-23.39 12.39-50.4 3.05-74.63l-.31-.82-.43-.75c-2.55-4.45-5.52-8.63-8.86-12.48 7.05-21.43 7.64-44.5 1.68-66.23l-.16-.6-.23-.58C415.7 139.5 403.8 96.15 383.41 59.06zm-34.65 279.6c-5.3 1.12-10.36 3.07-15 5.76l-2.52-1.06c-18.09-7.6-38.04-8.8-56.89-3.43l-1.8.52-1.55.9c-7.37 4.3-13.94 9.9-19.4 16.52l-2.36-.4c-20.52-3.46-41.5.78-59.2 11.94-24.76-12.43-41.5-36.71-43.69-63.77 14.05 6.03 29.48 7.79 44.6 5.06l1.3-.24 1.2-.52c22.08-9.6 39.48-27.9 48.02-50.64.17.17.34.34.52.5 14.14 13.2 33.03 19.84 52.18 18.33l1.17-.09 1.12-.3c24.5-6.59 44.74-23.96 55.25-47.17 9.46 16.32 12.68 35.63 8.94 54.37l-.4 1.97.47 1.96c3.25 13.52 10 25.8 19.58 35.7-9.76 7.04-21.28 11.33-33.25 13.29l-.23.3z" fill="white"/></svg>
+      </div>
       <span>Obsidian</span>
     </div>
+
+    <!-- Roam -->
     <div class="compat-item">
-      <img src="https://roamresearch.com/favicon.ico" alt="Roam" />
+      <div class="app-icon" style="background:#1d2d3e">
+        <svg width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="white" stroke-width="8" fill="none"/><circle cx="50" cy="50" r="16" fill="white"/><line x1="50" y1="10" x2="50" y2="34" stroke="white" stroke-width="8" stroke-linecap="round"/><line x1="50" y1="66" x2="50" y2="90" stroke="white" stroke-width="8" stroke-linecap="round"/><line x1="10" y1="50" x2="34" y2="50" stroke="white" stroke-width="8" stroke-linecap="round"/><line x1="66" y1="50" x2="90" y2="50" stroke="white" stroke-width="8" stroke-linecap="round"/></svg>
+      </div>
       <span>Roam</span>
     </div>
+
+    <!-- Bear -->
     <div class="compat-item">
-      <img src="https://bear.app/static/images/bear-icon.png" alt="Bear" style="border-radius:10px" />
+      <div class="app-icon" style="background:#d4422a">
+        <svg width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="58" rx="28" ry="26" fill="white"/><circle cx="30" cy="36" r="14" fill="white"/><circle cx="70" cy="36" r="14" fill="white"/><circle cx="50" cy="55" r="10" fill="#d4422a"/><circle cx="43" cy="50" r="4" fill="white"/><circle cx="57" cy="50" r="4" fill="white"/><ellipse cx="50" cy="61" rx="5" ry="3" fill="white"/></svg>
+      </div>
       <span>Bear</span>
     </div>
+
   </div>
 </div>
 
