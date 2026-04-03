@@ -2,46 +2,159 @@
 // Listens for messages from popup.js and orchestrates script injection + copy.
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action !== 'copyAsMarkdown') return;
+  if (message.action === 'copyAsMarkdown') {
+    const mode = message.mode || 'full'; // 'full' | 'prettify'
 
-  const mode = message.mode || 'full'; // 'full' | 'prettify'
+    (async () => {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab?.id) { sendResponse({ success: false, error: 'No active tab found.' }); return; }
 
-  (async () => {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['turndown.js'] });
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: runContentScript,
+          args: [mode],
+        });
 
-      if (!tab?.id) {
-        sendResponse({ success: false, error: 'No active tab found.' });
-        return;
+        const result = results?.[0]?.result;
+        if (!result?.success) {
+          sendResponse({ success: false, error: result?.error || 'Could not extract page content.' });
+          return;
+        }
+        sendResponse({ success: true, tokensSaved: result.tokensSaved });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
       }
+    })();
+    return true;
+  }
 
-      // Inject Turndown library first, then the conversion script
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['turndown.js'],
-      });
+  if (message.action === 'openAI') {
+    const { url, ai } = message;
 
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: runContentScript,
-        args: [mode],
-      });
+    (async () => {
+      try {
+        // 1. Copy the current tab's content first
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tab?.id) { sendResponse({ success: false, error: 'No active tab found.' }); return; }
 
-      const result = results?.[0]?.result;
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['turndown.js'] });
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: runContentScript,
+          args: ['prettify'],
+        });
 
-      if (!result?.success) {
-        sendResponse({ success: false, error: result?.error || 'Could not extract page content.' });
-        return;
+        const result = results?.[0]?.result;
+        if (!result?.success) {
+          sendResponse({ success: false, error: result?.error || 'Could not extract page content.' });
+          return;
+        }
+
+        // 2. Open the AI tab
+        const newTab = await chrome.tabs.create({ url });
+
+        // 3. Wait for the tab to finish loading, then inject the paste banner
+        const onUpdated = (tabId, info) => {
+          if (tabId !== newTab.id || info.status !== 'complete') return;
+          chrome.tabs.onUpdated.removeListener(onUpdated);
+
+          chrome.scripting.executeScript({
+            target: { tabId: newTab.id },
+            func: injectPasteBanner,
+            args: [ai],
+          });
+        };
+        chrome.tabs.onUpdated.addListener(onUpdated);
+
+        sendResponse({ success: true });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
       }
-
-      sendResponse({ success: true, tokensSaved: result.tokensSaved });
-    } catch (err) {
-      sendResponse({ success: false, error: err.message });
-    }
-  })();
-
-  return true; // keep message channel open for async response
+    })();
+    return true;
+  }
 });
+
+// Injected into the AI tab — shows a floating "press Cmd+V" banner
+function injectPasteBanner(ai) {
+  // Don't inject twice
+  if (document.getElementById('mdcopy-banner')) return;
+
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const shortcut = isMac ? '⌘V' : 'Ctrl+V';
+
+  const banner = document.createElement('div');
+  banner.id = 'mdcopy-banner';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:20px;">📋</span>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:#fff;line-height:1.2;">
+          Page copied as Markdown
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px;">
+          Press <kbd style="background:rgba(255,255,255,0.15);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:12px;">${shortcut}</kbd> to paste into ${ai}
+        </div>
+      </div>
+      <button id="mdcopy-dismiss" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.5);font-size:18px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+    </div>
+  `;
+
+  Object.assign(banner.style, {
+    position: 'fixed',
+    top: '16px',
+    right: '16px',
+    zIndex: '2147483647',
+    background: 'linear-gradient(135deg, #EC008C 0%, #00DCC8 100%)',
+    borderRadius: '12px',
+    padding: '12px 14px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+    maxWidth: '320px',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    animation: 'mdcopy-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+  });
+
+  // Add keyframe animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes mdcopy-slide-in {
+      from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+    @keyframes mdcopy-fade-out {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-8px); }
+    }
+  `;
+  document.head.appendChild(style);
+  document.body.appendChild(banner);
+
+  function dismiss() {
+    banner.style.animation = 'mdcopy-fade-out 0.2s ease forwards';
+    setTimeout(() => banner.remove(), 200);
+  }
+
+  document.getElementById('mdcopy-dismiss').addEventListener('click', dismiss);
+
+  // Also auto-dismiss after 8 seconds
+  setTimeout(dismiss, 8000);
+
+  // Try to focus the chat input so user can paste immediately
+  setTimeout(() => {
+    const selectors = [
+      '#prompt-textarea',         // ChatGPT
+      '[data-testid="chat-input-view"] div[contenteditable]', // Claude
+      'textarea[placeholder]',
+      'div[contenteditable="true"]',
+    ];
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (el) { el.focus(); break; }
+    }
+  }, 800);
+}
 
 // Injected as a function so we can pass `mode` as an argument
 function runContentScript(mode) {

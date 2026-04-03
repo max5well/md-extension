@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Click the icon to copy the current page's content as Markdown to your clipboard.",
   "permissions": ["activeTab", "scripting", "clipboardWrite", "tabs"],
+  "host_permissions": ["https://chat.openai.com/*", "https://claude.ai/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

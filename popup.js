@@ -60,11 +60,14 @@ chatgptBtn.addEventListener('click', () => {
   setAllDisabled(true);
   setStatus('Copying & opening ChatGPT…', 'loading');
 
-  chrome.runtime.sendMessage({ action: 'copyAsMarkdown', mode: 'prettify' }, (response) => {
+  chrome.runtime.sendMessage({
+    action: 'openAI',
+    url: 'https://chat.openai.com/?model=gpt-4o',
+    ai: 'ChatGPT',
+  }, (response) => {
     setAllDisabled(false);
     if (response?.success) {
-      setStatus('✓ Paste it into ChatGPT!', 'success');
-      chrome.tabs.create({ url: 'https://chat.openai.com/?model=gpt-4o' });
+      setStatus('✓ Just press ⌘V in ChatGPT!', 'success');
     } else {
       setStatus(response?.error || 'Something went wrong.', 'error');
     }
@@ -76,11 +79,14 @@ claudeBtn.addEventListener('click', () => {
   setAllDisabled(true);
   setStatus('Copying & opening Claude…', 'loading');
 
-  chrome.runtime.sendMessage({ action: 'copyAsMarkdown', mode: 'prettify' }, (response) => {
+  chrome.runtime.sendMessage({
+    action: 'openAI',
+    url: 'https://claude.ai/new',
+    ai: 'Claude',
+  }, (response) => {
     setAllDisabled(false);
     if (response?.success) {
-      setStatus('✓ Paste it into Claude!', 'success');
-      chrome.tabs.create({ url: 'https://claude.ai/new' });
+      setStatus('✓ Just press ⌘V in Claude!', 'success');
     } else {
       setStatus(response?.error || 'Something went wrong.', 'error');
     }
