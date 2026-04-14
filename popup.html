@@ -1,214 +1,262 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Copy as Markdown</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Copy as Markdown</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      width: 280px;
-      padding: 20px 16px 16px;
-      background: #160828;
-      color: #ffffff;
-    }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        width: 280px;
+        padding: 20px 16px 16px;
+        background: #160828;
+        color: #ffffff;
+      }
 
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
 
-    .logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 9px;
-      flex-shrink: 0;
-    }
+      .logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        flex-shrink: 0;
+      }
 
-    .header-text {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
+      .header-text {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
 
-    h1 {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: #ffffff;
-      text-transform: uppercase;
-      line-height: 1;
-    }
+      h1 {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: #ffffff;
+        text-transform: uppercase;
+        line-height: 1;
+      }
 
-    .tagline {
-      font-size: 10px;
-      color: rgba(255,255,255,0.45);
-      letter-spacing: 0.02em;
-    }
+      .tagline {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.45);
+        letter-spacing: 0.02em;
+      }
 
-    /* ── Section labels ── */
-    .section-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
-      margin-bottom: 7px;
-    }
+      /* ── Section labels ── */
+      .section-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.35);
+        margin-bottom: 7px;
+      }
 
-    /* ── Primary copy button ── */
-    .btn-primary {
-      width: 100%;
-      padding: 11px 14px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #EC008C 0%, #00DCC8 100%);
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: 0.02em;
-      transition: opacity 0.15s, transform 0.1s;
-      margin-bottom: 8px;
-    }
-    .btn-primary:hover  { opacity: 0.88; }
-    .btn-primary:active { opacity: 0.75; transform: scale(0.98); }
-    .btn-primary:disabled {
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.3);
-      cursor: default; transform: none; opacity: 1;
-    }
+      /* ── Primary copy button ── */
+      .btn-primary {
+        width: 100%;
+        padding: 11px 14px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ec008c 0%, #00dcc8 100%);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+        margin-bottom: 8px;
+      }
+      .btn-primary:hover {
+        opacity: 0.88;
+      }
+      .btn-primary:active {
+        opacity: 0.75;
+        transform: scale(0.98);
+      }
+      .btn-primary:disabled {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.3);
+        cursor: default;
+        transform: none;
+        opacity: 1;
+      }
 
-    /* ── Prettify button ── */
-    .btn-prettify {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.05);
-      color: rgba(255,255,255,0.85);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      letter-spacing: 0.02em;
-      transition: background 0.15s, border-color 0.15s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .btn-prettify:hover  { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.25); }
-    .btn-prettify:active { transform: scale(0.98); }
-    .btn-prettify:disabled {
-      opacity: 0.35; cursor: default; transform: none;
-    }
-    .btn-prettify .badge {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      background: linear-gradient(135deg, #EC008C 0%, #00DCC8 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      border: 1px solid rgba(236,0,140,0.4);
-      border-radius: 4px;
-      padding: 1px 5px;
-      line-height: 1.4;
-    }
+      /* ── Prettify button ── */
+      .btn-prettify {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          transform 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .btn-prettify:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+      .btn-prettify:active {
+        transform: scale(0.98);
+      }
+      .btn-prettify:disabled {
+        opacity: 0.35;
+        cursor: default;
+        transform: none;
+      }
+      /* ── Transcript button (YouTube only) ── */
+      #transcript-btn {
+        display: none;
+      }
 
-    /* ── Send to AI row ── */
-    .ai-row {
-      display: flex;
-      gap: 7px;
-    }
+      .btn-prettify .badge {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        background: linear-gradient(135deg, #ec008c 0%, #00dcc8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        border: 1px solid rgba(236, 0, 140, 0.4);
+        border-radius: 4px;
+        padding: 1px 5px;
+        line-height: 1.4;
+      }
 
-    .btn-ai {
-      flex: 1;
-      padding: 9px 8px;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.8);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      letter-spacing: 0.01em;
-    }
-    .btn-ai:hover  { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.22); }
-    .btn-ai:active { transform: scale(0.97); }
-    .btn-ai:disabled { opacity: 0.35; cursor: default; transform: none; }
+      /* ── Send to AI row ── */
+      .ai-row {
+        display: flex;
+        gap: 7px;
+      }
 
-    .btn-ai .ai-icon {
-      width: 15px;
-      height: 15px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-    }
+      .btn-ai {
+        flex: 1;
+        padding: 9px 8px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          transform 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        letter-spacing: 0.01em;
+      }
+      .btn-ai:hover {
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(255, 255, 255, 0.22);
+      }
+      .btn-ai:active {
+        transform: scale(0.97);
+      }
+      .btn-ai:disabled {
+        opacity: 0.35;
+        cursor: default;
+        transform: none;
+      }
 
-    /* ── Status ── */
-    #status {
-      margin-top: 11px;
-      font-size: 12px;
-      min-height: 16px;
-      text-align: center;
-      transition: color 0.2s;
-      color: rgba(255,255,255,0.35);
-    }
-    #status.success { color: #00DCC8; }
-    #status.error   { color: #EC008C; }
-    #status.loading { color: rgba(255,255,255,0.4); }
+      .btn-ai .ai-icon {
+        width: 15px;
+        height: 15px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+      }
 
-    /* ── Divider ── */
-    .divider {
-      height: 1px;
-      background: rgba(255,255,255,0.07);
-      margin: 14px 0 12px;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <img class="logo" src="icons/icon128.png" alt="md logo" />
-    <div class="header-text">
-      <h1>Copy as Markdown</h1>
-      <span class="tagline">One click. LLM-ready.</span>
+      /* ── Status ── */
+      #status {
+        margin-top: 11px;
+        font-size: 12px;
+        min-height: 16px;
+        text-align: center;
+        transition: color 0.2s;
+        color: rgba(255, 255, 255, 0.35);
+      }
+      #status.success {
+        color: #00dcc8;
+      }
+      #status.error {
+        color: #ec008c;
+      }
+      #status.loading {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      /* ── Divider ── */
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.07);
+        margin: 14px 0 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img class="logo" src="icons/icon128.png" alt="md logo" />
+      <div class="header-text">
+        <h1>Copy as Markdown</h1>
+        <span class="tagline">One click. LLM-ready.</span>
+      </div>
     </div>
-  </div>
 
-  <div class="section-label">Copy</div>
-  <button class="btn-primary" id="copy-btn">📋 Copy Full Page</button>
-  <button class="btn-prettify" id="prettify-btn">
-    ✨ Prettify &amp; Copy
-    <span class="badge">TOKEN SAVER</span>
-  </button>
-
-  <div class="divider"></div>
-
-  <div class="section-label">Send to AI</div>
-  <div class="ai-row">
-    <button class="btn-ai" id="chatgpt-btn">
-      <span class="ai-icon">🤖</span> ChatGPT
+    <div class="section-label">Copy</div>
+    <button class="btn-primary" id="copy-btn">📋 Copy Full Page</button>
+    <button class="btn-prettify" id="prettify-btn">
+      ✨ Prettify &amp; Copy
+      <span class="badge">TOKEN SAVER</span>
     </button>
-    <button class="btn-ai" id="claude-btn">
-      <span class="ai-icon">⚡</span> Claude
-    </button>
-  </div>
 
-  <p id="status"></p>
-  <script src="popup.js"></script>
-</body>
+    <button class="btn-prettify" id="transcript-btn">🎬 Copy Transcript</button>
+
+    <div class="divider"></div>
+
+    <div class="section-label">Send to AI</div>
+    <div class="ai-row">
+      <button class="btn-ai" id="chatgpt-btn">
+        <span class="ai-icon">🤖</span> ChatGPT
+      </button>
+      <button class="btn-ai" id="claude-btn">
+        <span class="ai-icon">⚡</span> Claude
+      </button>
+    </div>
+
+    <p id="status"></p>
+    <script src="popup.js"></script>
+  </body>
 </html>

@@ -2,15 +2,24 @@
 // Listens for messages from popup.js and orchestrates script injection + copy.
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'copyAsMarkdown') {
-    const mode = message.mode || 'full'; // 'full' | 'prettify'
+  if (message.action === "copyAsMarkdown") {
+    const mode = message.mode || "full"; // 'full' | 'prettify'
 
     (async () => {
       try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab?.id) { sendResponse({ success: false, error: 'No active tab found.' }); return; }
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (!tab?.id) {
+          sendResponse({ success: false, error: "No active tab found." });
+          return;
+        }
 
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['turndown.js'] });
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["turndown.js"],
+        });
         const results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: runContentScript,
@@ -19,7 +28,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         const result = results?.[0]?.result;
         if (!result?.success) {
-          sendResponse({ success: false, error: result?.error || 'Could not extract page content.' });
+          sendResponse({
+            success: false,
+            error: result?.error || "Could not extract page content.",
+          });
           return;
         }
         sendResponse({ success: true, tokensSaved: result.tokensSaved });
@@ -30,25 +42,70 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.action === 'openAI') {
+  if (message.action === "copyTranscript") {
+    (async () => {
+      try {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (!tab?.id) {
+          sendResponse({ success: false, error: "No active tab found." });
+          return;
+        }
+
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: runTranscriptScript,
+        });
+
+        const result = results?.[0]?.result;
+        if (!result?.success) {
+          sendResponse({
+            success: false,
+            error: result?.error || "Could not get transcript.",
+          });
+          return;
+        }
+        sendResponse({ success: true });
+      } catch (err) {
+        sendResponse({ success: false, error: err.message });
+      }
+    })();
+    return true;
+  }
+
+  if (message.action === "openAI") {
     const { url, ai } = message;
 
     (async () => {
       try {
         // 1. Copy the current tab's content first
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (!tab?.id) { sendResponse({ success: false, error: 'No active tab found.' }); return; }
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (!tab?.id) {
+          sendResponse({ success: false, error: "No active tab found." });
+          return;
+        }
 
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['turndown.js'] });
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["turndown.js"],
+        });
         const results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: runContentScript,
-          args: ['prettify'],
+          args: ["prettify"],
         });
 
         const result = results?.[0]?.result;
         if (!result?.success) {
-          sendResponse({ success: false, error: result?.error || 'Could not extract page content.' });
+          sendResponse({
+            success: false,
+            error: result?.error || "Could not extract page content.",
+          });
           return;
         }
 
@@ -57,7 +114,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // 3. Wait for the tab to finish loading, then inject the paste banner
         const onUpdated = (tabId, info) => {
-          if (tabId !== newTab.id || info.status !== 'complete') return;
+          if (tabId !== newTab.id || info.status !== "complete") return;
           chrome.tabs.onUpdated.removeListener(onUpdated);
 
           chrome.scripting.executeScript({
@@ -80,13 +137,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Injected into the AI tab — shows a floating "press Cmd+V" banner
 function injectPasteBanner(ai) {
   // Don't inject twice
-  if (document.getElementById('mdcopy-banner')) return;
+  if (document.getElementById("mdcopy-banner")) return;
 
-  const isMac = navigator.platform.toUpperCase().includes('MAC');
-  const shortcut = isMac ? '⌘V' : 'Ctrl+V';
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
+  const shortcut = isMac ? "⌘V" : "Ctrl+V";
 
-  const banner = document.createElement('div');
-  banner.id = 'mdcopy-banner';
+  const banner = document.createElement("div");
+  banner.id = "mdcopy-banner";
   banner.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;">
       <span style="font-size:20px;">📋</span>
@@ -103,21 +160,21 @@ function injectPasteBanner(ai) {
   `;
 
   Object.assign(banner.style, {
-    position: 'fixed',
-    top: '16px',
-    right: '16px',
-    zIndex: '2147483647',
-    background: 'linear-gradient(135deg, #EC008C 0%, #00DCC8 100%)',
-    borderRadius: '12px',
-    padding: '12px 14px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-    maxWidth: '320px',
+    position: "fixed",
+    top: "16px",
+    right: "16px",
+    zIndex: "2147483647",
+    background: "linear-gradient(135deg, #EC008C 0%, #00DCC8 100%)",
+    borderRadius: "12px",
+    padding: "12px 14px",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+    maxWidth: "320px",
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    animation: 'mdcopy-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    animation: "mdcopy-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
   });
 
   // Add keyframe animation
-  const style = document.createElement('style');
+  const style = document.createElement("style");
   style.textContent = `
     @keyframes mdcopy-slide-in {
       from { opacity: 0; transform: translateY(-12px) scale(0.95); }
@@ -132,11 +189,11 @@ function injectPasteBanner(ai) {
   document.body.appendChild(banner);
 
   function dismiss() {
-    banner.style.animation = 'mdcopy-fade-out 0.2s ease forwards';
+    banner.style.animation = "mdcopy-fade-out 0.2s ease forwards";
     setTimeout(() => banner.remove(), 200);
   }
 
-  document.getElementById('mdcopy-dismiss').addEventListener('click', dismiss);
+  document.getElementById("mdcopy-dismiss").addEventListener("click", dismiss);
 
   // Also auto-dismiss after 8 seconds
   setTimeout(dismiss, 8000);
@@ -144,14 +201,17 @@ function injectPasteBanner(ai) {
   // Try to focus the chat input so user can paste immediately
   setTimeout(() => {
     const selectors = [
-      '#prompt-textarea',         // ChatGPT
+      "#prompt-textarea", // ChatGPT
       '[data-testid="chat-input-view"] div[contenteditable]', // Claude
-      'textarea[placeholder]',
+      "textarea[placeholder]",
       'div[contenteditable="true"]',
     ];
     for (const sel of selectors) {
       const el = document.querySelector(sel);
-      if (el) { el.focus(); break; }
+      if (el) {
+        el.focus();
+        break;
+      }
     }
   }, 800);
 }
@@ -160,22 +220,22 @@ function injectPasteBanner(ai) {
 function runContentScript(mode) {
   try {
     const turndownService = new TurndownService({
-      headingStyle: 'atx',
-      hr: '---',
-      bulletListMarker: '-',
-      codeBlockStyle: 'fenced',
-      fence: '```',
-      emDelimiter: '_',
-      strongDelimiter: '**',
-      linkStyle: 'inlined',
+      headingStyle: "atx",
+      hr: "---",
+      bulletListMarker: "-",
+      codeBlockStyle: "fenced",
+      fence: "```",
+      emDelimiter: "_",
+      strongDelimiter: "**",
+      linkStyle: "inlined",
     });
 
     // Work on a clone so we never mutate the live DOM
-    const container = document.createElement('div');
+    const container = document.createElement("div");
 
     const source =
-      document.querySelector('main') ||
-      document.querySelector('article') ||
+      document.querySelector("main") ||
+      document.querySelector("article") ||
       document.querySelector('[role="main"]') ||
       document.body;
 
@@ -183,56 +243,100 @@ function runContentScript(mode) {
 
     // ── Always remove structural noise ──────────────────────────
     const baseRemove = [
-      'script', 'style', 'noscript', 'iframe',
-      'nav', 'header', 'footer', 'aside',
-      '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
-      '.nav', '.navbar', '.header', '.footer', '.sidebar',
-      '.cookie-banner', '.ad', '.ads', '.advertisement',
+      "script",
+      "style",
+      "noscript",
+      "iframe",
+      "nav",
+      "header",
+      "footer",
+      "aside",
+      '[role="navigation"]',
+      '[role="banner"]',
+      '[role="contentinfo"]',
+      ".nav",
+      ".navbar",
+      ".header",
+      ".footer",
+      ".sidebar",
+      ".cookie-banner",
+      ".ad",
+      ".ads",
+      ".advertisement",
     ];
-    baseRemove.forEach(sel => container.querySelectorAll(sel).forEach(el => el.remove()));
+    baseRemove.forEach((sel) =>
+      container.querySelectorAll(sel).forEach((el) => el.remove()),
+    );
 
     // ── Prettify mode: extra aggressive cleaning ─────────────────
-    if (mode === 'prettify') {
+    if (mode === "prettify") {
       const prettifyRemove = [
         // Images and media
-        'img', 'figure', 'picture', 'video', 'audio', 'canvas', 'svg',
+        "img",
+        "figure",
+        "picture",
+        "video",
+        "audio",
+        "canvas",
+        "svg",
         // Interactive / social junk
-        'button', 'form', 'input', 'select', 'textarea',
-        '[class*="share"]', '[class*="social"]', '[class*="comment"]',
-        '[class*="related"]', '[class*="recommend"]', '[class*="suggest"]',
-        '[class*="promo"]', '[class*="banner"]', '[class*="popup"]',
-        '[class*="modal"]', '[class*="newsletter"]', '[class*="subscribe"]',
-        '[class*="cta"]', '[class*="author-bio"]', '[class*="tags"]',
-        '[class*="breadcrumb"]', '[class*="pagination"]', '[class*="toc"]',
+        "button",
+        "form",
+        "input",
+        "select",
+        "textarea",
+        '[class*="share"]',
+        '[class*="social"]',
+        '[class*="comment"]',
+        '[class*="related"]',
+        '[class*="recommend"]',
+        '[class*="suggest"]',
+        '[class*="promo"]',
+        '[class*="banner"]',
+        '[class*="popup"]',
+        '[class*="modal"]',
+        '[class*="newsletter"]',
+        '[class*="subscribe"]',
+        '[class*="cta"]',
+        '[class*="author-bio"]',
+        '[class*="tags"]',
+        '[class*="breadcrumb"]',
+        '[class*="pagination"]',
+        '[class*="toc"]',
         // Tables of contents, skip-nav
-        '[id*="toc"]', '[id*="table-of-contents"]',
+        '[id*="toc"]',
+        '[id*="table-of-contents"]',
       ];
-      prettifyRemove.forEach(sel => container.querySelectorAll(sel).forEach(el => el.remove()));
+      prettifyRemove.forEach((sel) =>
+        container.querySelectorAll(sel).forEach((el) => el.remove()),
+      );
 
       // Strip all hyperlinks but keep their text
-      container.querySelectorAll('a').forEach(a => {
-        const span = document.createElement('span');
+      container.querySelectorAll("a").forEach((a) => {
+        const span = document.createElement("span");
         span.innerHTML = a.innerHTML;
         a.replaceWith(span);
       });
     }
 
     // ── Build Markdown ───────────────────────────────────────────
-    const title = document.title ? `# ${document.title}\n\n` : '';
-    const url   = mode === 'full' ? `> Source: ${window.location.href}\n\n` : '';
+    const title = document.title ? `# ${document.title}\n\n` : "";
+    const url = mode === "full" ? `> Source: ${window.location.href}\n\n` : "";
     const rawMarkdown = turndownService.turndown(container.innerHTML);
 
     // Collapse excessive blank lines (3+ → 2)
-    const body = rawMarkdown.replace(/\n{3,}/g, '\n\n').trim();
+    const body = rawMarkdown.replace(/\n{3,}/g, "\n\n").trim();
 
     const markdown = title + url + body;
 
     // ── Token savings estimate ───────────────────────────────────
     let tokensSaved = null;
-    if (mode === 'prettify') {
-      const fullContainer = document.createElement('div');
+    if (mode === "prettify") {
+      const fullContainer = document.createElement("div");
       fullContainer.innerHTML = source.innerHTML;
-      baseRemove.forEach(sel => fullContainer.querySelectorAll(sel).forEach(el => el.remove()));
+      baseRemove.forEach((sel) =>
+        fullContainer.querySelectorAll(sel).forEach((el) => el.remove()),
+      );
       const fullLen = turndownService.turndown(fullContainer.innerHTML).length;
       const prettyLen = body.length;
       if (fullLen > 0) {
@@ -241,17 +345,78 @@ function runContentScript(mode) {
     }
 
     // ── Copy to clipboard ────────────────────────────────────────
-    const ta = document.createElement('textarea');
+    const ta = document.createElement("textarea");
     ta.value = markdown;
-    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+    ta.style.cssText =
+      "position:fixed;top:0;left:0;opacity:0;pointer-events:none;";
     document.body.appendChild(ta);
     ta.focus();
     ta.select();
-    const ok = document.execCommand('copy');
+    const ok = document.execCommand("copy");
     document.body.removeChild(ta);
-    if (!ok) throw new Error('execCommand copy failed');
+    if (!ok) throw new Error("execCommand copy failed");
 
     return { success: true, tokensSaved };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+// Injected into a YouTube page to extract and copy the transcript
+async function runTranscriptScript() {
+  try {
+    const playerResponse = window.ytInitialPlayerResponse;
+    if (!playerResponse)
+      throw new Error(
+        "No player data found. Make sure you are on a YouTube video page.",
+      );
+
+    const tracks =
+      playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+    if (!tracks || tracks.length === 0)
+      throw new Error("No transcript available for this video.");
+
+    const track =
+      tracks.find((t) => t.languageCode && t.languageCode.startsWith("en")) ||
+      tracks[0];
+
+    if (!track?.baseUrl) throw new Error("Transcript URL not found.");
+
+    const resp = await fetch(track.baseUrl + "&fmt=json3");
+    if (!resp.ok) throw new Error(`Transcript fetch failed: ${resp.status}`);
+    const data = await resp.json();
+
+    const lines = [];
+    for (const event of data.events || []) {
+      if (!event.segs) continue;
+      const text = event.segs
+        .map((s) => s.utf8 || "")
+        .join("")
+        .replace(/\n/g, " ")
+        .trim();
+      if (text) lines.push(text);
+    }
+
+    if (lines.length === 0) throw new Error("Transcript is empty.");
+
+    const rawTitle = document.title
+      .replace(/\s*[-–|]\s*YouTube\s*$/, "")
+      .trim();
+    const title = rawTitle ? `# ${rawTitle}\n\n` : "";
+    const markdown = title + lines.join("\n");
+
+    const ta = document.createElement("textarea");
+    ta.value = markdown;
+    ta.style.cssText =
+      "position:fixed;top:0;left:0;opacity:0;pointer-events:none;";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (!ok) throw new Error("execCommand copy failed.");
+
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }
