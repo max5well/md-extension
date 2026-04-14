@@ -365,32 +365,22 @@ function runContentScript(mode) {
 // Injected into a YouTube page to extract and copy the transcript
 async function runTranscriptScript() {
   try {
-    // ytInitialPlayerResponse is only set on fresh page loads.
-    // For SPA navigations, read it from ytplayer.config or re-fetch the page.
-    let playerResponse = window.ytInitialPlayerResponse;
-
-    if (!playerResponse) {
-      const videoId = new URLSearchParams(window.location.search).get("v");
-      if (!videoId) throw new Error("No video ID found in URL.");
-      const pageResp = await fetch(
-        `https://www.youtube.com/watch?v=${videoId}`,
+    // Try multiple sources — ytInitialPlayerResponse is only set on hard loads,
+    // SPA navigations update ytplayer.config instead.
+    let playerResponse =
+      window.ytInitialPlayerResponse ||
+      window.ytplayer?.config?.args?.raw_player_response;
+    if (
+      !playerResponse &&
+      window.ytplayer?.config?.args?.player_response_json
+    ) {
+      playerResponse = JSON.parse(
+        window.ytplayer.config.args.player_response_json,
       );
-      const html = await pageResp.text();
-      const start = html.indexOf("ytInitialPlayerResponse\x3d");
-      if (start === -1) throw new Error("Could not find player data on page.");
-      const jsonStart = html.indexOf("{", start);
-      // Walk forward counting braces to find the matching closing brace
-      let depth = 0,
-        i = jsonStart;
-      for (; i < html.length; i++) {
-        if (html[i] === "{") depth++;
-        else if (html[i] === "}") {
-          depth--;
-          if (depth === 0) break;
-        }
-      }
-      playerResponse = JSON.parse(html.slice(jsonStart, i + 1));
     }
+
+    if (!playerResponse)
+      throw new Error("No transcript data found. Try refreshing the page.");
 
     const tracks =
       playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
