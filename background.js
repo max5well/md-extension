@@ -376,11 +376,20 @@ async function runTranscriptScript() {
         `https://www.youtube.com/watch?v=${videoId}`,
       );
       const html = await pageResp.text();
-      const match = html.match(
-        /ytInitialPlayerResponse\s*=\s*(\{.+?\});(?:var |<\/script>)/s,
-      );
-      if (!match) throw new Error("Could not find player data on page.");
-      playerResponse = JSON.parse(match[1]);
+      const start = html.indexOf("ytInitialPlayerResponse\x3d");
+      if (start === -1) throw new Error("Could not find player data on page.");
+      const jsonStart = html.indexOf("{", start);
+      // Walk forward counting braces to find the matching closing brace
+      let depth = 0,
+        i = jsonStart;
+      for (; i < html.length; i++) {
+        if (html[i] === "{") depth++;
+        else if (html[i] === "}") {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      playerResponse = JSON.parse(html.slice(jsonStart, i + 1));
     }
 
     const tracks =
