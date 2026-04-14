@@ -365,22 +365,33 @@ function runContentScript(mode) {
 // Injected into a YouTube page to extract and copy the transcript
 async function runTranscriptScript() {
   try {
-    // Try multiple sources — ytInitialPlayerResponse is only set on hard loads,
-    // SPA navigations update ytplayer.config instead.
-    let playerResponse =
-      window.ytInitialPlayerResponse ||
-      window.ytplayer?.config?.args?.raw_player_response;
-    if (
-      !playerResponse &&
-      window.ytplayer?.config?.args?.player_response_json
-    ) {
-      playerResponse = JSON.parse(
-        window.ytplayer.config.args.player_response_json,
+    // executeScript runs in an isolated world — inject a real <script> tag
+    // into the page context to read YouTube's globals, then pass them back
+    // via a custom DOM event.
+    const playerResponse = await new Promise((resolve, reject) => {
+      const id = "__yt_pr_" + Date.now();
+      window.addEventListener(id, (e) => resolve(e.detail), { once: true });
+      const s = document.createElement("script");
+      s.textContent = `
+        (function() {
+          const pr = window.ytInitialPlayerResponse
+            || window.ytplayer?.config?.args?.raw_player_response
+            || (window.ytplayer?.config?.args?.player_response_json
+                ? JSON.parse(window.ytplayer.config.args.player_response_json)
+                : null);
+          window.dispatchEvent(new CustomEvent('${id}', { detail: pr || null }));
+        })();
+      `;
+      document.documentElement.appendChild(s);
+      s.remove();
+      setTimeout(
+        () => reject(new Error("Timed out reading player data.")),
+        3000,
       );
-    }
+    });
 
     if (!playerResponse)
-      throw new Error("No transcript data found. Try refreshing the page.");
+      throw new Error("No transcript data found. Try reloading the page.");
 
     const tracks =
       playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
