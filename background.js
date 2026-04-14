@@ -365,11 +365,23 @@ function runContentScript(mode) {
 // Injected into a YouTube page to extract and copy the transcript
 async function runTranscriptScript() {
   try {
-    const playerResponse = window.ytInitialPlayerResponse;
-    if (!playerResponse)
-      throw new Error(
-        "No player data found. Make sure you are on a YouTube video page.",
+    // ytInitialPlayerResponse is only set on fresh page loads.
+    // For SPA navigations, read it from ytplayer.config or re-fetch the page.
+    let playerResponse = window.ytInitialPlayerResponse;
+
+    if (!playerResponse) {
+      const videoId = new URLSearchParams(window.location.search).get("v");
+      if (!videoId) throw new Error("No video ID found in URL.");
+      const pageResp = await fetch(
+        `https://www.youtube.com/watch?v=${videoId}`,
       );
+      const html = await pageResp.text();
+      const match = html.match(
+        /ytInitialPlayerResponse\s*=\s*(\{.+?\});(?:var |<\/script>)/s,
+      );
+      if (!match) throw new Error("Could not find player data on page.");
+      playerResponse = JSON.parse(match[1]);
+    }
 
     const tracks =
       playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
