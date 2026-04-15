@@ -366,56 +366,55 @@ function runContentScript(mode) {
 // Injected into the page's MAIN world to access YouTube's JS globals
 async function runTranscriptScript() {
   try {
-    // Get video ID from URL
     const videoId = new URLSearchParams(window.location.search).get("v");
     if (!videoId) throw new Error("No video ID found in URL.");
 
-    // Get API key from ytcfg
-    const apiKey =
-      window.ytcfg?.get?.("INNERTUBE_API_KEY") ||
-      "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8";
+    // Fetch a fresh copy of the page to get valid signed timedtext URLs
+    const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: { "Accept-Language": "en-US,en;q=0.9" },
+    });
+    const html = await pageResp.text();
 
-    // Use YouTube's internal transcript API
-    const resp = await fetch(
-      `https://www.youtube.com/youtubei/v1/get_transcript?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          context: {
-            client: {
-              clientName: "WEB",
-              clientVersion: "2.20240101",
-              hl: "en",
-            },
-          },
-          params: btoa(
-            String.fromCharCode(
-              10,
-              videoId.length,
-              ...videoId.split("").map((c) => c.charCodeAt(0)),
-              40,
-              1,
-            ),
-          ),
-        }),
-      },
-    );
-    if (!resp.ok) throw new Error(`Transcript API failed: ${resp.status}`);
-    const data = await resp.json();
+    // Extract ytInitialPlayerResponse from fresh HTML using balanced-brace walk
+    const marker = "ytInitialPlayerResponse=";
+    const markerIdx = html.indexOf(marker);
+    if (markerIdx === -1)
+      throw new Error("Could not find player data in page.");
+    const jsonStart = html.indexOf("{", markerIdx);
+    let depth = 0,
+      i = jsonStart;
+    for (; i < html.length; i++) {
+      if (html[i] === "{") depth++;
+      else if (html[i] === "}" && --depth === 0) break;
+    }
+    const playerResponse = JSON.parse(html.slice(jsonStart, i + 1));
 
-    // Extract transcript segments from response
-    const segments =
-      data?.actions?.[0]?.updateEngagementPanelAction?.content
-        ?.transcriptRenderer?.content?.transcriptSearchPanelRenderer?.body
-        ?.transcriptSegmentListRenderer?.initialSegments;
-
-    if (!segments || segments.length === 0)
+    const tracks =
+      playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+    if (!tracks || tracks.length === 0)
       throw new Error("No transcript available for this video.");
 
-    const nodes = segments
-      .map((s) => s?.transcriptSegmentRenderer?.snippet?.runs?.[0]?.text)
-      .filter(Boolean);
+    const track = tracks[0];
+    if (!track?.baseUrl) throw new Error("Transcript URL not found.");
+
+    const xmlResp = await fetch(track.baseUrl);
+    if (!xmlResp.ok)
+      throw new Error(`Transcript fetch failed: ${xmlResp.status}`);
+    const xml = await xmlResp.text();
+    if (!xml || xml.trim().length === 0)
+      throw new Error("Transcript response was empty.");
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "text/xml");
+    const textNodes = Array.from(doc.querySelectorAll("text"));
+    if (textNodes.length === 0)
+      throw new Error("No transcript segments found.");
+
+    const nodes = textNodes.map((node) => {
+      const ta = document.createElement("textarea");
+      ta.innerHTML = node.textContent;
+      return ta.value;
+    });
 
     const lines = nodes
       .map((t) => t.replace(/\n/g, " ").trim())
