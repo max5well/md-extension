@@ -392,7 +392,14 @@ async function runTranscriptScript() {
 
     if (!track?.baseUrl) throw new Error("Transcript URL not found.");
 
-    const resp = await fetch(track.baseUrl);
+    const url =
+      track.baseUrl +
+      "&lang=" +
+      encodeURIComponent(track.languageCode) +
+      (track.name?.simpleText
+        ? "&name=" + encodeURIComponent(track.name.simpleText)
+        : "");
+    const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Transcript fetch failed: ${resp.status}`);
     const xml = await resp.text();
     if (!xml || xml.trim().length === 0)
