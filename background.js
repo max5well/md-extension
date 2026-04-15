@@ -377,35 +377,44 @@ async function runTranscriptScript() {
     const clientVersion = cfg.get("INNERTUBE_CLIENT_VERSION") || "2.20240101";
     const hl = cfg.get("HL") || "en";
 
-    // Encode params: protobuf for get_transcript
-    // Field 1 (video_id): string, Field 2: nested { field 1: "asr" }
-    function encodeVarint(n) {
-      const out = [];
-      while (n > 127) {
-        out.push((n & 0x7f) | 0x80);
-        n >>= 7;
+    // Try to get pre-built params from ytInitialData's engagement panels
+    let params;
+    try {
+      const panels = window.ytInitialData?.engagementPanels || [];
+      for (const panel of panels) {
+        const ep =
+          panel?.engagementPanelSectionListRenderer?.header
+            ?.engagementPanelTitleHeaderRenderer?.menu
+            ?.sortFilterSubMenuRenderer?.subMenuItems?.[0]?.continuation
+            ?.reloadContinuationData?.continuation;
+        if (ep) {
+          params = ep;
+          break;
+        }
       }
-      out.push(n);
-      return out;
+    } catch (e) {
+      /* fall through */
     }
-    function encodeString(fieldNum, str) {
-      const bytes = Array.from(new TextEncoder().encode(str));
-      return [
-        ...encodeVarint((fieldNum << 3) | 2),
-        ...encodeVarint(bytes.length),
-        ...bytes,
-      ];
+
+    // Fallback: manually encode protobuf
+    // field 1 = videoId (string), field 2 = lang (string), field 3 = 1 (varint)
+    if (!params) {
+      const enc = new TextEncoder();
+      const vid = enc.encode(videoId);
+      const lang = enc.encode(hl);
+      params = btoa(
+        String.fromCharCode(
+          0x0a,
+          vid.length,
+          ...vid,
+          0x12,
+          lang.length,
+          ...lang,
+          0x18,
+          0x01,
+        ),
+      );
     }
-    const inner = encodeString(1, "asr");
-    const innerMsg = [
-      ...encodeVarint((2 << 3) | 2),
-      ...encodeVarint(inner.length),
-      ...inner,
-    ];
-    const outer = [...encodeString(1, videoId), ...innerMsg];
-    const params = btoa(String.fromCharCode(...outer))
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
 
     const resp = await fetch(
       `https://www.youtube.com/youtubei/v1/get_transcript?key=${apiKey}`,
