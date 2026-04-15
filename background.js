@@ -369,55 +369,69 @@ async function runTranscriptScript() {
     const videoId = new URLSearchParams(window.location.search).get("v");
     if (!videoId) throw new Error("No video ID found in URL.");
 
-    // Fetch a fresh copy of the page to get valid signed timedtext URLs
-    const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: { "Accept-Language": "en-US,en;q=0.9" },
-    });
-    const html = await pageResp.text();
+    // Build innertube context from page globals
+    const cfg = window.ytcfg;
+    if (!cfg) throw new Error("ytcfg not found on page.");
+    const apiKey = cfg.get("INNERTUBE_API_KEY");
+    const clientName = cfg.get("INNERTUBE_CLIENT_NAME") || "WEB";
+    const clientVersion = cfg.get("INNERTUBE_CLIENT_VERSION") || "2.20240101";
+    const hl = cfg.get("HL") || "en";
 
-    // Extract ytInitialPlayerResponse from fresh HTML using balanced-brace walk
-    const marker = "ytInitialPlayerResponse=";
-    const markerIdx = html.indexOf(marker);
-    if (markerIdx === -1)
-      throw new Error("Could not find player data in page.");
-    const jsonStart = html.indexOf("{", markerIdx);
-    let depth = 0,
-      i = jsonStart;
-    for (; i < html.length; i++) {
-      if (html[i] === "{") depth++;
-      else if (html[i] === "}" && --depth === 0) break;
+    // Encode params: protobuf for get_transcript
+    // Field 1 (video_id): string, Field 2: nested { field 1: "asr" }
+    function encodeVarint(n) {
+      const out = [];
+      while (n > 127) {
+        out.push((n & 0x7f) | 0x80);
+        n >>= 7;
+      }
+      out.push(n);
+      return out;
     }
-    const playerResponse = JSON.parse(html.slice(jsonStart, i + 1));
+    function encodeString(fieldNum, str) {
+      const bytes = Array.from(new TextEncoder().encode(str));
+      return [
+        ...encodeVarint((fieldNum << 3) | 2),
+        ...encodeVarint(bytes.length),
+        ...bytes,
+      ];
+    }
+    const inner = encodeString(1, "asr");
+    const innerMsg = [
+      ...encodeVarint((2 << 3) | 2),
+      ...encodeVarint(inner.length),
+      ...inner,
+    ];
+    const outer = [...encodeString(1, videoId), ...innerMsg];
+    const params = btoa(String.fromCharCode(...outer))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
 
-    const tracks =
-      playerResponse?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
-    if (!tracks || tracks.length === 0)
+    const resp = await fetch(
+      `https://www.youtube.com/youtubei/v1/get_transcript?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          context: { client: { clientName, clientVersion, hl } },
+          params,
+        }),
+      },
+    );
+    if (!resp.ok) throw new Error(`Transcript API failed: ${resp.status}`);
+    const data = await resp.json();
+
+    const segments =
+      data?.actions?.[0]?.updateEngagementPanelAction?.content
+        ?.transcriptRenderer?.content?.transcriptSearchPanelRenderer?.body
+        ?.transcriptSegmentListRenderer?.initialSegments;
+    if (!segments || segments.length === 0)
       throw new Error("No transcript available for this video.");
 
-    const track = tracks[0];
-    if (!track?.baseUrl) throw new Error("Transcript URL not found.");
-
-    const xmlResp = await fetch(track.baseUrl);
-    if (!xmlResp.ok)
-      throw new Error(`Transcript fetch failed: ${xmlResp.status}`);
-    const xml = await xmlResp.text();
-    if (!xml || xml.trim().length === 0)
-      throw new Error("Transcript response was empty.");
-
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, "text/xml");
-    const textNodes = Array.from(doc.querySelectorAll("text"));
-    if (textNodes.length === 0)
-      throw new Error("No transcript segments found.");
-
-    const nodes = textNodes.map((node) => {
-      const ta = document.createElement("textarea");
-      ta.innerHTML = node.textContent;
-      return ta.value;
-    });
-
-    const lines = nodes
-      .map((t) => t.replace(/\n/g, " ").trim())
+    const lines = segments
+      .map((s) =>
+        s?.transcriptSegmentRenderer?.snippet?.runs?.[0]?.text?.trim(),
+      )
       .filter(Boolean);
 
     if (lines.length === 0) throw new Error("Transcript is empty.");
