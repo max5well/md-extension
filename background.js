@@ -57,6 +57,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const results = await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           func: runTranscriptScript,
+          world: "MAIN",
         });
 
         const result = results?.[0]?.result;
@@ -362,33 +363,20 @@ function runContentScript(mode) {
   }
 }
 
-// Injected into a YouTube page to extract and copy the transcript
+// Injected into the page's MAIN world to access YouTube's JS globals
 async function runTranscriptScript() {
   try {
-    // executeScript runs in an isolated world — inject a real <script> tag
-    // into the page context to read YouTube's globals, then pass them back
-    // via a custom DOM event.
-    const playerResponse = await new Promise((resolve, reject) => {
-      const id = "__yt_pr_" + Date.now();
-      window.addEventListener(id, (e) => resolve(e.detail), { once: true });
-      const s = document.createElement("script");
-      s.textContent = `
-        (function() {
-          const pr = window.ytInitialPlayerResponse
-            || window.ytplayer?.config?.args?.raw_player_response
-            || (window.ytplayer?.config?.args?.player_response_json
-                ? JSON.parse(window.ytplayer.config.args.player_response_json)
-                : null);
-          window.dispatchEvent(new CustomEvent('${id}', { detail: pr || null }));
-        })();
-      `;
-      document.documentElement.appendChild(s);
-      s.remove();
-      setTimeout(
-        () => reject(new Error("Timed out reading player data.")),
-        3000,
+    let playerResponse =
+      window.ytInitialPlayerResponse ||
+      window.ytplayer?.config?.args?.raw_player_response;
+    if (
+      !playerResponse &&
+      window.ytplayer?.config?.args?.player_response_json
+    ) {
+      playerResponse = JSON.parse(
+        window.ytplayer.config.args.player_response_json,
       );
-    });
+    }
 
     if (!playerResponse)
       throw new Error("No transcript data found. Try reloading the page.");
