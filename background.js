@@ -386,19 +386,12 @@ async function runTranscriptScript() {
     if (!tracks || tracks.length === 0)
       throw new Error("No transcript available for this video.");
 
-    const track =
-      tracks.find((t) => t.languageCode && t.languageCode.startsWith("en")) ||
-      tracks[0];
+    const track = tracks[0];
 
     if (!track?.baseUrl) throw new Error("Transcript URL not found.");
 
-    const url =
-      track.baseUrl +
-      "&lang=" +
-      encodeURIComponent(track.languageCode) +
-      (track.name?.simpleText
-        ? "&name=" + encodeURIComponent(track.name.simpleText)
-        : "");
+    // baseUrl already contains all required params — fetch it directly
+    const url = track.baseUrl;
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Transcript fetch failed: ${resp.status}`);
     const xml = await resp.text();
