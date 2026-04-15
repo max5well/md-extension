@@ -392,20 +392,27 @@ async function runTranscriptScript() {
 
     if (!track?.baseUrl) throw new Error("Transcript URL not found.");
 
-    const resp = await fetch(track.baseUrl + "&fmt=json3");
+    const resp = await fetch(track.baseUrl);
     if (!resp.ok) throw new Error(`Transcript fetch failed: ${resp.status}`);
-    const data = await resp.json();
+    const xml = await resp.text();
+    if (!xml || xml.trim().length === 0)
+      throw new Error("Transcript response was empty.");
 
-    const lines = [];
-    for (const event of data.events || []) {
-      if (!event.segs) continue;
-      const text = event.segs
-        .map((s) => s.utf8 || "")
-        .join("")
-        .replace(/\n/g, " ")
-        .trim();
-      if (text) lines.push(text);
-    }
+    // Parse XML transcript: <text start="..." dur="...">content</text>
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, "text/xml");
+    const nodes = Array.from(doc.querySelectorAll("text"));
+    if (nodes.length === 0)
+      throw new Error("No transcript segments found in response.");
+
+    const lines = nodes
+      .map((node) => {
+        // Decode HTML entities (YouTube encodes & as &amp; etc.)
+        const ta = document.createElement("textarea");
+        ta.innerHTML = node.textContent;
+        return ta.value.replace(/\n/g, " ").trim();
+      })
+      .filter(Boolean);
 
     if (lines.length === 0) throw new Error("Transcript is empty.");
 
